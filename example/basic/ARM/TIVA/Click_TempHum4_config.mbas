@@ -1,0 +1,8 @@
+module Click_TempHum4_config
+
+include Click_TempHum4_types
+
+const
+    _TEMPHUM4_I2C_CFG as uint32_t[1] = (_I2C_BITRATE_STANDARD_MODE)
+    
+end.

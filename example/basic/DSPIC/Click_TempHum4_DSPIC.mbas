@@ -1,0 +1,80 @@
+'
+'Example for TempHum4 Click
+'
+'    Date          : Jan 2018.
+'    Author        : MikroE Team
+'
+'Test configuration dsPIC :
+'    
+'    MCU                : P33FJ256GP710A
+'    Dev. Board         : EasyPIC Fusion v7
+'    dsPIC Compiler ver : v7.0.1.0
+'
+'---
+'
+'Description :
+'
+'The application is composed of three sections :
+'
+'- System Initialization - Initializes I2C module and CS pin,RST pin as OUTPUT and INT pin as INPUT
+'- Application Initialization - Initializes Driver init and settings chip mode ACTIVE and configuration measurement
+'- Application Task - (code snippet) -  Reads the temperature and huminidy and logs to the USBUART every 500 ms.
+'
+'
+program Click_TempHum4_DSPIC
+
+include Click_TempHum4_types
+include Click_TempHum4_config
+
+dim
+    temp_txt as char[256] 
+    hum_txt as char[256] 
+    Temperature as float 
+    Huminidy as float 
+    
+sub procedure systemInit() 
+
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_CS_PIN, _GPIO_OUTPUT) 
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_RST_PIN, _GPIO_OUTPUT) 
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_INT_PIN, _GPIO_INPUT) 
+    mikrobus_i2cInit(_MIKROBUS1, @_TEMPHUM4_I2C_CFG[0]) 
+    mikrobus_logInit(_LOG_USBUART_A, 9600) 
+    Delay_ms(100) 
+
+end sub
+
+sub procedure applicationInit() 
+
+    temphum4_i2cDriverInit(T_TEMPHUM4_P(@_MIKROBUS1_GPIO), T_TEMPHUM4_P(@_MIKROBUS1_I2C), 0x42) 
+    temphum4_setMode(_TEMPHUM4_MODE_ACTIVE) 
+    temphum4_Configuration((((((_TEMPHUM4_CONF_NORMAL_OPERATION or _TEMPHUM4_CONF_HEATER_DISABLED) or _TEMPHUM4_CONF_MODE_TEMP_AND_HUM) or _TEMPHUM4_CONF_BATTERY_VOLTAGE_2_8_V) or _TEMPHUM4_CONF_TEMPERATURE_14bit) or _TEMPHUM4_CONF_HUMINIDY_14bit)) 
+    Delay_100ms() 
+    mikrobus_logWrite("--- Init done ---", _LOG_LINE) 
+
+end sub
+
+sub procedure applicationTask() 
+
+    Temperature = temphum4_getTemperature() 
+    Huminidy = temphum4_getHuminidy() 
+    FloatToStr(Temperature, temp_txt) 
+    mikrobus_logWrite("Temperature : ", _LOG_TEXT) 
+    mikrobus_logWrite(temp_txt, _LOG_LINE) 
+    FloatToStr(Huminidy, hum_txt) 
+    mikrobus_logWrite("Huminidy : ", _LOG_TEXT) 
+    mikrobus_logWrite(hum_txt, _LOG_LINE) 
+    Delay_ms(500) 
+
+end sub
+
+main :
+    Temperature = 0
+    Huminidy = 0
+
+    systemInit() 
+    applicationInit() 
+    while (1) 
+        applicationTask() 
+    wend
+
+end.
